@@ -1,0 +1,76 @@
+import discord
+from discord.ext import commands
+import random
+import asyncio
+from discord.voice_client import VoiceClient
+
+client = commands.Bot(command_prefix = '.')
+
+#Bot run
+@client.event
+async def on_ready():
+    await client.change_presence(activity=discord.Game(name='Izmir'))
+    print('Bot is ready.')
+
+#Join 
+@client.command(pass_context=True , no_pm=True)
+async def join(self, ctx):
+    summoned_channel = ctx.message.author.voice_channel
+    if summoned_channel is None:
+        await ctx.bot.say('You are not in a voice channel.')
+        return False
+
+    state = ctx.get_voice_state(ctx.message.server)
+    if state.voice is None:
+        state.voice = await ctx.bot.join_voice_channel(summoned_channel)
+    else:
+        await state.voice.move_to(summoned_channel)
+
+        return True
+
+#Bot ping status
+@client.command()
+async def ping(ctx):
+    await ctx.send(f'Pong! {round(client.latency * 1000)}ms')
+
+#Bot clear text 
+@client.command()
+async def clear(ctx,amount=5):
+    await ctx.channel.purge(limit=amount)
+
+#Bot kick
+@client.command()
+async def kick(ctx,member : discord.Member,*,reason=None):
+    await member.kick(reason=reason)
+
+#Bot ban
+@client.command()
+async def ban(ctx,member : discord.Member,*,reason=None):
+    await member.ban(reason=reason)
+    await ctx.send(f'Banned {member.mention}')
+
+#Bot unban
+@client.command()
+async def unban(ctx,*,member):
+    banned_users = await ctx.guild.bans()
+    member_name, member_discriminator = member.split('#')
+
+    for ban_entry in banned_users:
+        user = ban_entry.user
+        
+        if(user.name, user.discriminator) == (member_name, member_discriminator):
+            await ctx.guild.unban(user)
+            await ctx.send(f'Unbanned {user.mention}')
+            return
+
+#Bot member login
+@client.event 
+async def on_member_join(member):
+    print(f'{member} has joined a server.')
+
+#Bot member logout
+@client.event
+async def on_member_remove(member):
+    print(f'{member} has left a server.')
+
+client.run('NTgwMTYwNDU3NDQxMDE3ODU3.XOMqlA.Jla5wqRCSdOg5b6ca9rh_JXMsfw')
